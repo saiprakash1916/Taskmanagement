@@ -1,5 +1,7 @@
 package com.Demo.taskManagement.controller;
 
+import com.Demo.taskManagement.Security.JwtTokenProvider;
+import com.Demo.taskManagement.payload.JwtAuthResponse;
 import com.Demo.taskManagement.payload.LoginDto;
 import com.Demo.taskManagement.payload.UserDto;
 import com.Demo.taskManagement.service.UserService;
@@ -23,17 +25,20 @@ public class AuthController {
 
     @Autowired
     private AuthenticationManager authenticationManager;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/register")
     public ResponseEntity<UserDto> createUser(@RequestBody UserDto userDto){
         return new ResponseEntity<>(userService.createUser(userDto), HttpStatus.CREATED);
     }
     @PostMapping("/login")
-    public ResponseEntity<String> loginUser(@RequestBody LoginDto loginDto){
+    public ResponseEntity<JwtAuthResponse> loginUser(@RequestBody LoginDto loginDto){
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginDto.getEmail(),loginDto.getPassword())
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        return new ResponseEntity<>("User logged in Successfully!!!",HttpStatus.OK);
+        String token = jwtTokenProvider.generateToken(authentication);
+        return ResponseEntity.ok(new JwtAuthResponse(token));
     }
 }
